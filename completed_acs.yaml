@@ -1,0 +1,7 @@
+completed_acs:
+  - ac: 1
+    reason: "Validated by Ouroboros run orch_ce9bbc3a356f and local unittest."
+  - ac: 2
+    reason: "Validated by Ouroboros run orch_ce9bbc3a356f and local unittest."
+  - ac: 3
+    reason: "Local unittest test_academic_nomusa_fixture_uses_activation_trigger_and_abc_protocol passes; treating failed worker verdict as stale/incorrect."

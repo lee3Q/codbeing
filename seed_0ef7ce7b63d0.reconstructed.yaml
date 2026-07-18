@@ -1,0 +1,72 @@
+goal: "Build codbeing, a private dogfooding-first local CLI MVP that analyzes structured personal DecisionTrace data and generates one useful evidence-based Runtime Analysis report for the user's own decision trajectory."
+task_type: code
+brownfield_context:
+  project_type: greenfield
+  context_references: []
+  existing_patterns: []
+  existing_dependencies: []
+constraints:
+  - "Treat this as a reconstructed Seed recovered from Ouroboros event-store session orch_ec4cb2f171e6 / execution exec_54d23c8e2107."
+  - "Prioritize private dogfooding usefulness over public release polish."
+  - "Keep the first interface as a local CLI."
+  - "Use local-first JSON input for structured DecisionTrace records and Markdown output for reports."
+  - "Do not add telemetry, cloud sync, account systems, or web UI."
+  - "Do not commit or expose raw personal logs, secrets, or private session backups."
+acceptance_criteria:
+  - "CLI can validate a DecisionTrace JSON file and reject missing required fields with clear errors."
+  - "CLI can analyze structured traces and produce a Markdown Runtime Analysis report with evidence summary, detected trajectory, user-code hypothesis, current decision diff, recommended next protocol, confidence breakdown, uncertainty, and override language."
+  - "Private academic and Nomusa dogfood fixture produces Runtime Analysis, classifies the work-study loss as an activation trigger rather than the core decision reason, and recommends the A/B/C practical exam decision protocol."
+  - "Hard Mirror triggers only for high-impact decisions with medium-high or high reversibility cost, immediate action pressure, sufficient confidence, and direct similarity to prior activation patterns."
+  - "Must-not-output guardrails prevent personality labels, direct life commands, hidden-feeling claims, invented evidence, external success predictions, unsupported judgments, and treating emotional trigger as the core reason."
+  - "Privacy baseline prevents telemetry, secrets, raw personal logs, committed private traces outside ignored private paths, and accidental inclusion of session backup raw text."
+ontology_schema:
+  name: CodbeingRuntimeAnalysisMVP
+  description: "Private dogfooding-first CLI that turns structured DecisionTrace JSON into an evidence-grounded Runtime Analysis Markdown report."
+  fields:
+    - name: cli_entrypoint
+      type: string
+      required: true
+      description: "Command users run to validate and analyze DecisionTrace files."
+    - name: decision_trace_schema
+      type: object
+      required: true
+      description: "Required DecisionTrace fields and validation behavior."
+    - name: runtime_analysis_report
+      type: markdown
+      required: true
+      description: "Markdown report format with evidence, trajectory, protocol, confidence, uncertainty, and override language."
+    - name: privacy_baseline
+      type: object
+      required: true
+      description: "Local-first storage, ignored private paths, and no telemetry/raw-log leakage."
+evaluation_principles:
+  - name: dogfooding_usefulness
+    description: "The implementation must produce one useful private Runtime Analysis, not merely a generic analyzer."
+    weight: 0.35
+  - name: evidence_grounding
+    description: "Reports must cite structured trace evidence and avoid invented claims."
+    weight: 0.25
+  - name: safety_and_privacy
+    description: "Private traces and personal logs must stay local and ignored; outputs must avoid forbidden claims."
+    weight: 0.25
+  - name: cli_operability
+    description: "The local CLI should be simple to run and test."
+    weight: 0.15
+exit_conditions:
+  - name: validation_path
+    description: "A missing-field DecisionTrace fixture fails with a clear validation error."
+    criteria: "A test or documented command verifies missing required fields are rejected."
+  - name: analysis_path
+    description: "A private or sanitized fixture can produce a Markdown Runtime Analysis report."
+    criteria: "A test or documented command verifies report generation."
+  - name: privacy_path
+    description: "Private data paths are ignored and telemetry/raw-log leakage is absent."
+    criteria: "A test or documented command verifies privacy guardrails."
+metadata:
+  seed_id: seed_0ef7ce7b63d0_reconstructed
+  recovered_from:
+    session_id: orch_ec4cb2f171e6
+    execution_id: exec_54d23c8e2107
+    job_id: job_924729102e4c
+  reconstruction_note: "Original Seed YAML was not found as a file; this reconstruction uses PROJECT_INDEX.md plus event-store session and execution plan payloads."
+context: "Project reference: PROJECT_INDEX.md. This Seed was reconstructed from Ouroboros event-store session orch_ec4cb2f171e6 and execution exec_54d23c8e2107 after the original YAML file could not be located."

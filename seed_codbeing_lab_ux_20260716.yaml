@@ -1,0 +1,127 @@
+goal: "Redesign the existing codbeing CLI so running `cb` with no arguments opens a dynamic private research-lab experience for the user's ongoing self-as-code research, instead of printing command help or a static app menu."
+task_type: code
+brownfield_context:
+  project_type: brownfield
+  context_references:
+    - path: "/Users/sanggyulee/codbeing"
+      role: primary
+      summary: "Existing codbeing Python CLI project; current no-args `cb` prints status and command suggestions."
+    - path: "/Users/sanggyulee/codbeing/UX_REDESIGN_HANDOFF_20260716.md"
+      role: reference
+      summary: "Pre-interview UX handoff describing the gap between current CLI utility behavior and desired guided terminal product."
+    - path: "/Users/sanggyulee/codbeing/LAB_SPACE_SPEC_20260716.md"
+      role: reference
+      summary: "Earlier lab-space concept to reinterpret as prepared research apparatus rather than fixed always-visible rooms."
+    - path: "/Users/sanggyulee/.ouroboros/data/interview_interview_20260716_124202.json"
+      role: reference
+      summary: "Completed UX interview establishing the dynamic lab, researcher accompaniment, LLM policy, and ongoing single-user research model."
+  existing_patterns:
+    - "Python CLI entrypoint in codbeing/__main__.py"
+    - "Local JSON trace storage under private-traces/"
+    - "Markdown reports under private-reports/"
+    - "Config-driven model provider selection in private/codbeing-config.json"
+    - "Power-user subcommands remain available for direct use"
+  existing_dependencies:
+    - "Python standard library argparse/json/pathlib/datetime"
+    - "Existing codbeing.config, codbeing.models, codbeing.report, and codbeing.schema modules"
+constraints:
+  - "Preserve the primary executable path `~/.local/bin/cb` and existing power-user commands including `cb capture`, `cb run`, `cb model`, `cb example nomusa`, and `cb skills`."
+  - "Do not introduce a project model such as new research, continue research, or choose another research; codbeing is one ongoing study of the current user as code."
+  - "Treat Self Code, Simulation, Evidence, and Analysis as prepared research apparatus/lenses, not fixed empty menu rooms that are always shown."
+  - "The lab entrance must be dynamic: empty states show first-contact paths, while accumulated evidence unlocks relevant work surfaces."
+  - "Researcher accompaniment is a global mode callable from any visible surface; researchers are docent/commentary roles over the deeper code-based lab structure, not the whole intelligence of the system."
+  - "Use vendor-neutral LLM language in requirements and UI; do not hardcode GLM as the conceptual provider."
+  - "Solo viewing of refined traces, reports, Self Code hypotheses, and prepared/rules-based simulations must work without LLM calls."
+  - "Use LLM assist only for free-form interpretation, explanation, new scenario creation, personalized next experiments, or researcher accompaniment that needs generative reasoning."
+  - "When LLM assist is requested for a material or report, provide the full relevant body/context rather than only a summary, unless the user explicitly chooses a reduced context."
+  - "External model calls require explicit user selection/key availability and must not silently send raw private material outside the local/user-controlled environment."
+  - "Do not add telemetry, accounts, cloud sync, payment, public sharing, or a web UI in this Seed."
+acceptance_criteria:
+  - "Running `cb` with no arguments opens an interactive lab entrance/control-room flow rather than a help/status-only printout, and exits cleanly when the user chooses to leave."
+  - "The lab entrance detects empty, trace-present, report-present, and configured-model states, then shows only context-meaningful next actions instead of a fixed list of dead rooms."
+  - "In an empty lab, the user can start the ongoing self-research through at least three first-contact paths: talk with a researcher/docent, submit analyzable material, or receive a personalized experiment/question; at least one path works without LLM."
+  - "When evidence exists, the entrance can surface relevant work surfaces for evidence/materials, reports/analysis, Self Code hypotheses, and simulations without presenting them as separate research projects."
+  - "From every surfaced work surface, the user can inspect alone, call a researcher to view it together, and return to solo viewing; researcher accompaniment adds explanation, questions, summaries, or next-experiment suggestions only when LLM assist is available or explicitly requested."
+  - "Model/LLM behavior is visible inside the lab flow: local/offline capabilities remain usable, vendor-neutral LLM assist can be selected when configured, and external context-sending boundaries are explicit."
+  - "Automated tests or documented verification cover first-run empty lab, existing trace/report lab, model selection visibility, Nomusa/demo access, preservation of legacy subcommands, and no unintended LLM call during solo/local paths."
+ontology_schema:
+  name: CodbeingDynamicLabUX
+  description: "Domain model for turning the existing codbeing CLI into a dynamic single-user research lab surface backed by local evidence and optional LLM assistance."
+  fields:
+    - name: lab_state
+      type: object
+      required: true
+      description: "Derived state from config, trace stores, reports, demos, and available model assist."
+    - name: research_target
+      type: object
+      required: true
+      description: "The ongoing single-user study target; there are no separate research projects."
+    - name: research_apparatus
+      type: array
+      required: true
+      description: "Prepared lenses/tools such as Self Code, Simulation, Evidence, and Analysis that surface only when meaningful."
+    - name: evidence_item
+      type: object
+      required: true
+      description: "Any analyzable artifact, including decision traces, submitted materials, reports, simulations, corrections, notes, chat logs, recordings, or session backups."
+    - name: work_surface
+      type: object
+      required: true
+      description: "A currently visible lab surface generated from lab_state and available evidence."
+    - name: researcher_accompaniment
+      type: object
+      required: true
+      description: "Global docent/commentary mode that can be called from a work surface and released back to solo viewing."
+    - name: llm_assist_policy
+      type: object
+      required: true
+      description: "Vendor-neutral rules for when LLM assist is unavailable, optional, required, or externally consent-gated."
+    - name: legacy_command
+      type: array
+      required: true
+      description: "Existing direct CLI commands that remain available for power users and tests."
+evaluation_principles:
+  - name: lab_feeling
+    description: "The no-args experience should feel like entering a private research lab, not reading command help."
+    weight: 0.24
+  - name: dynamic_statefulness
+    description: "Visible surfaces must reflect current evidence and avoid empty fixed-room menu clutter."
+    weight: 0.18
+  - name: evidence_grounding
+    description: "Analysis and Self Code surfaces must show evidence, confidence, missing data, and correction paths."
+    weight: 0.18
+  - name: local_first_privacy
+    description: "Local inspection and prepared/rules-based flows must work without unintended LLM or network use."
+    weight: 0.18
+  - name: accompaniment_ergonomics
+    description: "Solo and researcher-accompanied modes must be easy to enter, leave, and understand from any surface."
+    weight: 0.14
+  - name: brownfield_stability
+    description: "Existing CLI commands, files, and tests should keep working while the no-args UX changes."
+    weight: 0.08
+exit_conditions:
+  - name: lab_entry_verified
+    description: "No-args `cb` launches the dynamic lab entrance and not the old static help/status output."
+    criteria: "Manual run or automated test confirms the first screen and exit path."
+  - name: empty_and_existing_states_verified
+    description: "The lab behaves differently but coherently for empty state and accumulated evidence state."
+    criteria: "Tests or documented fixtures cover no traces, existing traces, existing reports, and model config."
+  - name: llm_boundary_verified
+    description: "Solo/local paths do not call LLM, and LLM assist paths expose provider/context boundaries."
+    criteria: "Tests or documented verification prove local paths stay offline and assist paths require explicit selection."
+  - name: legacy_compatibility_verified
+    description: "Existing codbeing commands remain usable."
+    criteria: "`python3 -m unittest discover -s tests -v` passes and direct legacy commands are smoke-tested or covered."
+metadata:
+  seed_id: "seed_codbeing_lab_ux_20260716"
+  version: 1
+  created_at: "2026-07-16T15:35:00Z"
+  interview_id: "interview_20260716_124202"
+  ambiguity_score:
+    source: "local CLI codex generation unavailable; zcode scoring reported 0.37 before user rejected zcode backend"
+    value: 0.37
+    force_reason: "User explicitly requested Seed generation after completing the interview; latest user clarifications resolve product direction sufficiently for a brownfield UX Seed."
+  generation_notes:
+    - "MCP ouroboros_generate_seed timed out after 120 seconds."
+    - "Local `ooo seed --llm-backend codex` could not score/generate because FAMILY_PROXY_API_KEY is missing in the local backend environment."
+    - "This Seed was manually crystallized from the completed interview JSON and codbeing project context."

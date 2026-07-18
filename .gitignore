@@ -1,0 +1,41 @@
+# Local DecisionTrace inputs and generated reports may contain personal data.
+private/
+private/**
+private-traces/
+private-traces/**
+private-reports/
+private-reports/**
+
+# Local tooling state and raw session backups.
+.omc/
+.ouroboros/
+.pytest_cache/
+__pycache__/
+**/__pycache__/
+*.py[cod]
+*.jsonl
+session-backups/
+session-backups/**
+*.session.json
+*.log
+.ouroboros_eval_artifact.md
+
+# Credentials and private configuration.
+.env
+.env.*
+*.key
+*.pem
+secrets/
+
+# Local dependency/vendor artifacts accidentally installed into the project root.
+bin/
+_pytest/
+pytest/
+py.py
+packaging/
+pluggy/
+iniconfig/
+tomli/
+exceptiongroup/
+typing_extensions.py
+*.dist-info/
