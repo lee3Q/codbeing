@@ -51,3 +51,7 @@ the prediction, compare the later choice, and verify the files. The receipts
 contain exact argv, exit code, output, and artifact hashes. Changing a direct
 decision invalidates the model and descendants; changing only the actual
 choice invalidates comparison and verification.
+When a stale node must regenerate an immutable model or prediction, the prior
+artifact moves under the receipt directory's `history/<node>/` with its hash
+recorded in the new receipt. That keeps prior outputs inspectable while the
+public graph can complete an actual input-change rerun.

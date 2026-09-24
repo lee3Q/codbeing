@@ -56,9 +56,31 @@ python3 -m codbeing.evidence_ledger evidence/public-cycle/ledger.jsonl verify --
 
 The command prints its temporary output directory. Pass a directory as its
 first argument to keep artifacts at a chosen location. Its fixed prediction
-time makes the public replay deterministic. In ordinary use, omit `--at` from
-the underlying `predict` command to record the current UTC time. Keep the
-prediction file fixed before recording the actual choice. The receipt's
+time makes the public replay deterministic. That fixed timestamp demonstrates
+recalculation, not when a prediction was actually issued. For a new decision,
+use the separate prospective journal, which issues a card at the current UTC
+time and accepts an actual choice only in a later command:
+
+```bash
+python3 -m codbeing.prospective issue examples/synthetic-cycle/decisions.json examples/synthetic-cycle/scenario.json /tmp/my-codbeing-decision
+python3 -m codbeing.prospective verify /tmp/my-codbeing-decision
+# After making the decision:
+python3 -m codbeing.prospective record-actual /tmp/my-codbeing-decision --action "My choice" --reason "Why I chose it"
+python3 -m codbeing.prospective verify /tmp/my-codbeing-decision
+```
+
+The committed [prospective example](examples/synthetic-prospective/events.jsonl)
+uses a **fictional** later choice. Its first event fixes the model and prediction
+file hashes before the second event records the choice. Verify its current
+chain head with `python3 -m codbeing.prospective verify
+examples/synthetic-prospective --expected-head
+33de20a4195d436d62e2473f5242111612eb7db83c2ef57946007b49c6197e4f`.
+The original issuance head was
+`2188ef4f492ba5c3005960ceab2b0b5bbd2ad61117084cb04662e55a0b29f802`.
+These local timestamps and hashes demonstrate command order and detect later
+file changes when checked against a separately saved head. They do not prove
+when a real person chose or make local files tamper-proof without an external
+anchor. The deterministic replay receipt's
 `passed` field and individual checks show whether the outputs reproduce from
 the synthetic inputs.
 

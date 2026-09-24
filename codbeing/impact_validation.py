@@ -99,6 +99,21 @@ class ImpactValidation:
             return None
         return value
 
+    def _archive_artifacts(self, ident: str) -> list[dict[str, str]]:
+        """Keep prior immutable outputs before regenerating a stale node."""
+        archived = []
+        archive_root = self.receipt_dir / "history" / ident / uuid.uuid4().hex
+        for name in self.nodes[ident]["artifacts"]:
+            source = self._path(name)
+            if not source.is_file():
+                continue
+            destination = archive_root / name
+            destination.parent.mkdir(parents=True, exist_ok=True)
+            digest = _file_hash(source)
+            os.replace(source, destination)
+            archived.append({"original": name, "archive": destination.relative_to(self.root).as_posix(), "sha256": digest})
+        return archived
+
     def status(self) -> dict[str, Any]:
         """Report completion only when each receipt matches current files and dependencies."""
         result: dict[str, Any] = {}
@@ -132,6 +147,7 @@ class ImpactValidation:
             missing = [name for name in node["inputs"] if not self._path(name).is_file()]
             if missing:
                 raise GraphError(f"{ident}: missing inputs: {', '.join(missing)}")
+            archived_artifacts = self._archive_artifacts(ident)
             process = subprocess.run(node["command"], cwd=self.root, capture_output=True, text=True, check=False)
             deps = {dep: self.status()[dep]["receipt_hash"] for dep in node["depends_on"]}
             receipt = {
@@ -141,6 +157,7 @@ class ImpactValidation:
                 "exit_code": process.returncode,
                 "stdout": process.stdout,
                 "stderr": process.stderr,
+                "archived_artifacts": archived_artifacts,
                 "snapshot": self._snapshot(ident, deps),
             }
             receipt["receipt_hash"] = _digest(receipt)
