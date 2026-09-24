@@ -18,6 +18,7 @@ __pycache__/
 *.jsonl
 !evidence/ac3.jsonl
 !evidence/public-cycle/ledger.jsonl
+!examples/synthetic-prospective/events.jsonl
 session-backups/
 session-backups/**
 *.session.json
