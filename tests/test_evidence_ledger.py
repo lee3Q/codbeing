@@ -16,12 +16,13 @@ def _file(root, name, content):
 
 def _cycle(root):
     _file(root, "seed.yaml", "goal: preserve evidence\n")
-    _file(root, "artifact.txt", "result\n")
     _file(root, "handoff.md", "Completed AC 3\n")
     ledger = EvidenceLedger(root, root / "evidence.jsonl")
     seed = ledger.append("seed", path="seed.yaml")
     criterion = ledger.append("acceptance_criterion", ac_id="3", text="Record hashed lineage")
-    command, receipt = ledger.run("3", [sys.executable, "-c", "print('verified')"], "receipt.json")
+    command, receipt = ledger.run("3", [sys.executable, "-c",
+                                         "from pathlib import Path; Path('artifact.txt').write_text('result\\n'); print('verified')"],
+                                  "receipt.json", outputs=["artifact.txt"])
     artifact = ledger.append("artifact", ac_id="3", path="artifact.txt")
     handoff = ledger.append("handoff", ac_id="3", path="handoff.md")
     return ledger, (seed, criterion, command, receipt, artifact, handoff)
@@ -45,8 +46,7 @@ def test_tampering_and_truncation_are_detected(tmp_path):
     ledger, events = _cycle(tmp_path)
     original = ledger.ledger.read_text(encoding="utf-8")
     _file(tmp_path, "artifact.txt", "altered\n")
-    with pytest.raises(LedgerError, match="evidence file changed"):
-        ledger.verify()
+    assert ledger.verify()["current_status"] == {"3": "INVALID"}
     _file(tmp_path, "artifact.txt", "result\n")
     lines = original.splitlines(keepends=True)
     changed = json.loads(lines[2])

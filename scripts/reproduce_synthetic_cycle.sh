@@ -4,6 +4,10 @@ set -euo pipefail
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 case_dir="$repo_root/examples/synthetic-cycle"
 output_dir="${1:-$(mktemp -d "${TMPDIR:-/tmp}/codbeing-synthetic.XXXXXX")}"
+if [ -d "$output_dir" ] && [ -n "$(ls -A "$output_dir")" ]; then
+  printf 'Output directory must be empty: %s\n' "$output_dir" >&2
+  exit 2
+fi
 mkdir -p "$output_dir"
 output_dir="$(cd "$output_dir" && pwd)"
 
@@ -19,11 +23,15 @@ mkdir -p "$repo_root/.codbeing-runs"
 ledger_dir="$(mktemp -d "$repo_root/.codbeing-runs/run.XXXXXX")"
 ledger_rel="${ledger_dir#"$repo_root"/}/evidence.jsonl"
 receipt_rel="${ledger_dir#"$repo_root"/}/graph-command-receipt.json"
+validation_rel="${ledger_dir#"$repo_root"/}/validation"
 python3 -m codbeing.evidence_ledger "$ledger_rel" record seed --file examples/synthetic-cycle/seed.json > /dev/null
 python3 -m codbeing.evidence_ledger "$ledger_rel" record acceptance_criterion --ac-id public_cycle --text 'Synthetic decision cycle, validation DAG, and artifact-backed completion' > /dev/null
-python3 -m codbeing.evidence_ledger "$ledger_rel" run --ac-id public_cycle --receipt "$receipt_rel" -- python3 -m codbeing.impact_validation examples/synthetic-cycle/validation-graph.json run --receipt-dir .codbeing-validation/public-cycle > /dev/null
-for artifact in model.json prediction.json comparison.json receipt.json validation-graph.json; do
-  python3 -m codbeing.evidence_ledger "$ledger_rel" record artifact --ac-id public_cycle --file "examples/synthetic-cycle/$artifact" > /dev/null
+python3 -m codbeing.evidence_ledger "$ledger_rel" run --ac-id public_cycle --receipt "$receipt_rel" \
+  --output "$validation_rel/model.json" --output "$validation_rel/prediction.json" \
+  --output "$validation_rel/comparison.json" --output "$validation_rel/verification.json" \
+  -- python3 -m codbeing.impact_validation examples/synthetic-cycle/validation-graph.json run --receipt-dir "$validation_rel" > /dev/null
+for node in model prediction comparison verification; do
+  python3 -m codbeing.evidence_ledger "$ledger_rel" record artifact --ac-id public_cycle --file "$validation_rel/$node.json" > /dev/null
 done
 python3 -m codbeing.evidence_ledger "$ledger_rel" record handoff --ac-id public_cycle --file examples/synthetic-cycle/handoff.md > /dev/null
 python3 -m codbeing.evidence_ledger "$ledger_rel" verify > "$ledger_dir/verified-state.json"

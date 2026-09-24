@@ -34,3 +34,16 @@ def test_public_synthetic_command_produces_verified_stage_one_artifacts(tmp_path
     assert receipt["stage"] == "stage_1_public_reproduction"
     assert receipt["stage_2_future_choice_study"] == "pending"
     assert json.loads((output_dir / "comparison.json").read_text(encoding="utf-8"))["action_match"] is False
+
+
+def test_public_synthetic_command_preserves_existing_output(tmp_path):
+    output_dir = tmp_path / "output"
+    output_dir.mkdir()
+    (output_dir / "model.json").write_text("user edit")
+    result = subprocess.run(
+        ["bash", str(ROOT / "scripts" / "reproduce_synthetic_cycle.sh"), str(output_dir)],
+        cwd=tmp_path, capture_output=True, text=True,
+    )
+    assert result.returncode == 2
+    assert "Output directory must be empty" in result.stderr
+    assert (output_dir / "model.json").read_text() == "user edit"
