@@ -1,0 +1,12 @@
+{
+  "checks": {
+    "comparison_matches": true,
+    "direct_decision_evidence_only": true,
+    "model_matches": true,
+    "prediction_matches": true,
+    "prediction_precedes_actual": true
+  },
+  "passed": true,
+  "stage": "stage_1_public_reproduction",
+  "stage_2_future_choice_study": "pending"
+}

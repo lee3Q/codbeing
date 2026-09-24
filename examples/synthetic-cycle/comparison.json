@@ -1,0 +1,10 @@
+{
+  "action_match": false,
+  "actual_action": "Decline until after the exam",
+  "actual_reason": "Even a short trial would break the current study routine",
+  "actual_recorded_at": "2026-08-02T12:00:00+00:00",
+  "note": "One prospective comparison; it does not validate general predictive accuracy.",
+  "predicted_action": "Try a two-week limited commitment",
+  "prediction_id": "dae68fbfab1915aff83b558ee6adc004c8fa1197544201ffb60141fae5dfb96a",
+  "scenario_id": "s1"
+}

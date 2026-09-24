@@ -1,0 +1,32 @@
+{
+  "nodes": [
+    {
+      "id": "model",
+      "depends_on": [],
+      "inputs": ["codbeing/research_cycle.py", "examples/synthetic-cycle/decisions.json"],
+      "artifacts": ["examples/synthetic-cycle/model.json"],
+      "command": ["python3", "-m", "codbeing.research_cycle", "model", "examples/synthetic-cycle/decisions.json", "examples/synthetic-cycle/model.json"]
+    },
+    {
+      "id": "prediction",
+      "depends_on": ["model"],
+      "inputs": ["codbeing/research_cycle.py", "examples/synthetic-cycle/scenario.json", "examples/synthetic-cycle/model.json"],
+      "artifacts": ["examples/synthetic-cycle/prediction.json"],
+      "command": ["python3", "-m", "codbeing.research_cycle", "predict", "examples/synthetic-cycle/model.json", "examples/synthetic-cycle/scenario.json", "examples/synthetic-cycle/prediction.json", "--at", "2026-08-01T12:00:00+00:00"]
+    },
+    {
+      "id": "comparison",
+      "depends_on": ["prediction"],
+      "inputs": ["codbeing/research_cycle.py", "examples/synthetic-cycle/prediction.json", "examples/synthetic-cycle/actual.json"],
+      "artifacts": ["examples/synthetic-cycle/comparison.json"],
+      "command": ["python3", "-m", "codbeing.research_cycle", "compare", "examples/synthetic-cycle/prediction.json", "examples/synthetic-cycle/actual.json", "examples/synthetic-cycle/comparison.json"]
+    },
+    {
+      "id": "verification",
+      "depends_on": ["comparison"],
+      "inputs": ["codbeing/research_cycle.py", "examples/synthetic-cycle/decisions.json", "examples/synthetic-cycle/scenario.json", "examples/synthetic-cycle/actual.json", "examples/synthetic-cycle/model.json", "examples/synthetic-cycle/prediction.json", "examples/synthetic-cycle/comparison.json"],
+      "artifacts": ["examples/synthetic-cycle/receipt.json"],
+      "command": ["python3", "-m", "codbeing.research_cycle", "verify", "examples/synthetic-cycle/decisions.json", "examples/synthetic-cycle/scenario.json", "examples/synthetic-cycle/actual.json", "examples/synthetic-cycle/model.json", "examples/synthetic-cycle/prediction.json", "examples/synthetic-cycle/comparison.json", "examples/synthetic-cycle/receipt.json"]
+    }
+  ]
+}

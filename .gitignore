@@ -9,11 +9,15 @@ private-reports/**
 # Local tooling state and raw session backups.
 .omc/
 .ouroboros/
+.codbeing-validation/
+.codbeing-runs/
 .pytest_cache/
 __pycache__/
 **/__pycache__/
 *.py[cod]
 *.jsonl
+!evidence/ac3.jsonl
+!evidence/public-cycle/ledger.jsonl
 session-backups/
 session-backups/**
 *.session.json

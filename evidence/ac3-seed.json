@@ -1,0 +1,6 @@
+{
+  "source": "seed-goal:ac_0ac8a56e1d2850dc",
+  "goal": "codbeing: personal decision evidence, testable hypotheses, prospective reflection, and user control of data",
+  "acceptance_criterion": "Seed·Acceptance Criteria·실행 명령·테스트 영수증·산출물·handoff를 해시로 잇는 append-only evidence ledger에 기록하고, 작업 상태를 모델 대화가 아니라 이벤트 계보에서 재구성한다. 변조를 탐지한다.",
+  "scope": "Current AC only; sibling decision-cycle implementation is outside this dispatch."
+}

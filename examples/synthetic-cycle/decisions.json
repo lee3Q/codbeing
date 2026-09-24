@@ -1,0 +1,22 @@
+[
+  {
+    "id": "d1",
+    "source_type": "direct_decision",
+    "situation": "A volunteer role overlaps with exam preparation.",
+    "conditions": ["limited_weekly_time", "reversible_commitment", "exam_priority"],
+    "action": "Try a two-week limited commitment",
+    "reason": "A short trial preserves study time while testing the opportunity",
+    "pressure": "Fear of missing out created urgency",
+    "alternatives": ["Accept the full role", "Decline immediately"]
+  },
+  {
+    "id": "d2",
+    "source_type": "direct_decision",
+    "situation": "An optional course overlaps with exam preparation.",
+    "conditions": ["limited_weekly_time", "exam_priority", "high_switching_cost"],
+    "action": "Defer enrollment until after the exam",
+    "reason": "The switching cost would disrupt a fixed study block",
+    "pressure": "Interest in the course made delay uncomfortable",
+    "alternatives": ["Enroll now", "Drop the idea permanently"]
+  }
+]

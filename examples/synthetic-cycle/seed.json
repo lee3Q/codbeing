@@ -1,0 +1,9 @@
+{
+  "goal": "Reproduce one fictional prospective decision cycle and verify its artifact lineage",
+  "acceptance_criteria": [
+    "Build a decision model solely from direct decisions and freeze a prediction before the recorded actual choice",
+    "Compare the frozen prediction with the later actual choice without claiming human predictive validity",
+    "Run the validation DAG and derive completion from current input, artifact, command, and receipt hashes"
+  ],
+  "privacy": "Fictional records only; no personal data"
+}
