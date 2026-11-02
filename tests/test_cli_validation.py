@@ -292,7 +292,7 @@ class DecisionTraceValidationCliTests(unittest.TestCase):
 
     def test_cb_home_shows_onboarding_and_model_status_entrypoints(self) -> None:
         result = subprocess.run(
-            [str(Path.home() / ".local/bin/cb")],
+            [sys.executable, "-m", "codbeing"],
             capture_output=True,
             check=False,
             cwd=Path(__file__).parents[1],
