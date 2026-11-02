@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import tempfile
 import os
 import sys
 from pathlib import Path
@@ -641,16 +642,24 @@ def _render_simulation_context(state: ResearchState) -> None:
 
 
 def _capture(args: argparse.Namespace, config: CodbeingConfig) -> int:
+    saving_started = False
     try:
         trace = _prompt_for_trace()
-        validate_decision_trace(trace)
+        validate_decision_trace(trace, require_core=True)
         traces = _load_trace_store(args.store)
         traces.append(trace)
+        saving_started = True
         _write_json(args.store, traces)
+    except KeyboardInterrupt:
+        if saving_started:
+            print("\nCapture interrupted during save. The trace may have been saved; check the store before retrying.")
+        else:
+            print("\nCapture cancelled; no DecisionTrace was appended.")
+        return 130
     except EOFError:
         print("Capture needs interactive input. Re-run `cb capture` in a terminal to record a DecisionTrace.")
         return 0
-    except (json.JSONDecodeError, DecisionTraceValidationError) as error:
+    except (OSError, json.JSONDecodeError, DecisionTraceValidationError) as error:
         print(f"capture error: {error}")
         return 2
 
@@ -766,7 +775,8 @@ def _skills() -> int:
 
 
 def _prompt_for_trace() -> dict[str, Any]:
-    print("Capture one DecisionTrace. Leave optional privacy fields blank to skip.")
+    print("Capture one DecisionTrace. Context, options, chosen action and judgment basis are required.")
+    print("Unknown observations may be left blank. Leave optional privacy fields blank to skip.")
     trace = {
         "context": _ask("Context"),
         "options": _ask_list("Options, comma-separated"),
@@ -825,11 +835,23 @@ def _read_json(path: Path) -> Any:
 
 
 def _write_json(path: Path, payload: Any) -> None:
+    """Replace a complete local JSON document, never truncate the old store first."""
+    content = json.dumps(payload, ensure_ascii=False, indent=2) + "\n"
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(
-        json.dumps(payload, ensure_ascii=False, indent=2) + "\n",
-        encoding="utf-8",
-    )
+    temporary = None
+    try:
+        with tempfile.NamedTemporaryFile(
+            mode="w", encoding="utf-8", dir=path.parent,
+            prefix=f".{path.name}.", suffix=".tmp", delete=False,
+        ) as handle:
+            temporary = Path(handle.name)
+            handle.write(content)
+            handle.flush()
+            os.fsync(handle.fileno())
+        temporary.replace(path)
+    finally:
+        if temporary is not None:
+            temporary.unlink(missing_ok=True)
 
 
 def _write_report(report_file: Path, report: str) -> int:
