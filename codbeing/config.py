@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import json
 import os
-import re
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -84,7 +83,6 @@ def glm_runtime_env() -> dict[str, str]:
             os.environ.get(name)
             or _dotenv_value(Path(".env"), (name,))
             or _dotenv_value(Path("private/.env"), (name,))
-            or _zshrc_assignment(name)
         )
         if value:
             values[name] = value
@@ -92,42 +90,16 @@ def glm_runtime_env() -> dict[str, str]:
 
 
 def _glm_api_key() -> str | None:
-    for name in (
-        "CODBEING_GLM_API_KEY",
-        "GLM_API_KEY",
-        "ZHIPUAI_API_KEY",
-        "ANTHROPIC_AUTH_TOKEN",
-    ):
+    """Use only credentials explicitly named for GLM, never another tool's token."""
+    names = ("CODBEING_GLM_API_KEY", "GLM_API_KEY", "ZHIPUAI_API_KEY")
+    for name in names:
         value = os.environ.get(name)
         if value and value.strip():
             return value.strip()
     for path in (Path(".env"), Path("private/.env")):
-        value = _dotenv_value(
-            path,
-            (
-                "CODBEING_GLM_API_KEY",
-                "GLM_API_KEY",
-                "ZHIPUAI_API_KEY",
-                "ANTHROPIC_AUTH_TOKEN",
-            ),
-        )
+        value = _dotenv_value(path, names)
         if value and value.strip():
             return value.strip()
-    shell_value = _zshrc_assignment("ANTHROPIC_AUTH_TOKEN")
-    return shell_value.strip() if shell_value and shell_value.strip() else None
-
-
-def _zshrc_assignment(name: str) -> str | None:
-    if os.environ.get("CODBEING_DISABLE_SHELL_KEY_LOOKUP") == "1":
-        return None
-    path = Path.home() / ".zshrc"
-    if not path.exists():
-        return None
-    pattern = re.compile(rf"\b{re.escape(name)}=(?P<value>\"[^\"]*\"|'[^']*'|[^\s\\]+)")
-    match = pattern.search(path.read_text(encoding="utf-8"))
-    if match is None:
-        return None
-    return match.group("value").strip().strip("'\"") or None
     return None
 
 

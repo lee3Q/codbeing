@@ -25,6 +25,15 @@ def analyze_decision_traces(payload: Any) -> str:
     for trace in traces:
         validate_decision_trace(trace)
 
+    legacy_warnings = _incomplete_evidence_warnings(traces)
+    if legacy_warnings:
+        return "\n".join([
+            "# Runtime Analysis", "", "## Insufficient evidence", 
+            "Analysis abstained: one or more legacy records do not meet the evidence schema.",
+            "Original values remain unchanged. No trajectory, hypothesis, choice or confidence was inferred.",
+            *legacy_warnings, "", "Review the listed records before requesting analysis again.", "",
+        ])
+
     current_trace = traces[-1]
     confidence = _confidence_label(traces)
     output_tier = _output_tier(traces)
@@ -53,6 +62,7 @@ def analyze_decision_traces(payload: Any) -> str:
             "",
             "## Analysis Guardrails",
             *_analysis_guardrails(),
+            *_incomplete_evidence_warnings(traces),
             "",
             "## Confidence Breakdown",
             f"- Overall confidence: **{confidence}**.",
@@ -221,6 +231,15 @@ def _output_tier(traces: Sequence[Mapping[str, Any]]) -> _OutputTier:
 def _hard_mirror_evaluation(traces: Sequence[Mapping[str, Any]]) -> str | None:
     if len(traces) < 2:
         return None
+
+    legacy_warnings = _incomplete_evidence_warnings(traces)
+    if legacy_warnings:
+        return "\n".join([
+            "# Runtime Analysis", "", "## Insufficient evidence", 
+            "Analysis abstained: one or more legacy records do not meet the evidence schema.",
+            "Original values remain unchanged. No trajectory, hypothesis, choice or confidence was inferred.",
+            *legacy_warnings, "", "Review the listed records before requesting analysis again.", "",
+        ])
 
     current_trace = traces[-1]
     if _signal_value(current_trace, "impact", "decision_impact") not in {
@@ -412,3 +431,23 @@ def _neutralize_instruction_like_text(text: str) -> str:
             lower_text = neutralized.lower()
             start = lower_text.find(phrase)
     return neutralized
+
+
+def _incomplete_evidence_warnings(traces: Sequence[Mapping[str, Any]]) -> list[str]:
+    """Keep older key-only records readable without treating blanks as evidence."""
+    warnings = []
+    for index, trace in enumerate(traces, start=1):
+        missing = [field for field in ("context", "chosen_action", "judgment_basis")
+                   if not isinstance(trace[field], str) or not trace[field].strip()]
+        for field in ("options", "rejected_options"):
+            if not isinstance(trace[field], list) or any(not isinstance(item, str) or not item.strip() for item in trace[field]) or (field == "options" and not trace[field]):
+                missing.append(field)
+        for field in ("observed_behavior", "outcome", "aftertaste", "memory_confidence", "source"):
+            if not isinstance(trace[field], str):
+                missing.append(field)
+        if missing:
+            warnings.append(
+                f"- Incomplete legacy evidence in trace {index}: {', '.join(missing)}. "
+                "Review this record before relying on any hypothesis; no missing evidence was filled."
+            )
+    return warnings

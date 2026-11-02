@@ -44,3 +44,9 @@ tomli/
 exceptiongroup/
 typing_extensions.py
 *.dist-info/
+
+# Local package builds and virtual environments.
+.venv/
+build/
+dist/
+*.egg-info/
