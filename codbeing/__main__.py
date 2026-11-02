@@ -181,7 +181,11 @@ def main(argv: Sequence[str] | None = None) -> int:
         print(json.dumps({"state": _json_lab_state()}, separators=(",", ":")))
         return 0
 
-    config = load_config(args.config)
+    try:
+        config = load_config(args.config)
+    except (OSError, ValueError):
+        print("config error: could not read local settings. Check the file, encoding, and permissions; no settings were changed.", file=sys.stderr)
+        return 2
 
     if args.command is None:
         return _home(config, args.config)
