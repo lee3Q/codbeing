@@ -29,7 +29,7 @@ from .lab_state import (
 )
 from .models import external_assist_ready, model_assist_section
 from .report import analyze_decision_traces
-from .schema import DecisionTraceValidationError, validate_decision_trace
+from .schema import REQUIRED_FIELDS, DecisionTraceValidationError, validate_decision_trace
 
 
 DEFAULT_TRACE_STORE = Path("private-traces/decision-traces.json")
@@ -144,6 +144,12 @@ def build_parser() -> argparse.ArgumentParser:
     )
     list_parser.add_argument("--store", type=Path, default=DEFAULT_TRACE_STORE)
 
+    show_parser = subparsers.add_parser(
+        "show", help="Show all original fields of one local record in this terminal (no model or writes)."
+    )
+    show_parser.add_argument("index", type=int, help="Zero-based index from cb list; positions may change if the store is edited.")
+    show_parser.add_argument("--store", type=Path, default=DEFAULT_TRACE_STORE)
+
     example_parser = subparsers.add_parser(
         "example", help="Create a private fixture from a known dogfooding example."
     )
@@ -201,6 +207,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         return _capture(args, config)
     if args.command == "list":
         return _list(args)
+    if args.command == "show":
+        return _show(args)
     if args.command in ("quick", "run") and args.trace_file is None:
         print(f"`cb {args.command}` validates and analyzes a DecisionTrace JSON file.")
         print(f"Usage: cb {args.command} TRACE_FILE [--reports-dir DIR] [--model MODEL]")
@@ -733,6 +741,38 @@ def _list(args: argparse.Namespace) -> int:
             f"       chose: {_one_line(trace['chosen_action'])}"
             f" | confidence: {_one_line(trace['memory_confidence'])}"
         )
+    return 0
+
+
+def _show(args: argparse.Namespace) -> int:
+    """Read one original trace without writing or contacting any provider."""
+    try:
+        traces = _load_trace_store(args.store)
+    except UnicodeDecodeError:
+        print("validation error: trace store is invalid UTF-8.")
+        return 2
+    except json.JSONDecodeError as error:
+        print(f"validation error: invalid JSON: {error.msg}")
+        return 2
+    except DecisionTraceValidationError as error:
+        print(f"validation error: {error}")
+        return 2
+    except OSError:
+        print("validation error: could not read trace store. Check the file and permissions.")
+        return 2
+    if args.index < 0 or args.index >= len(traces):
+        print("validation error: record index not found. Run `cb list` with the same --store; use its zero-based index.")
+        return 2
+    print(f"DecisionTrace [{args.index}] in {_terminal_safe(args.store)}")
+    print("Original local record; not a prediction. Full fields below may contain private notes.")
+    for field in REQUIRED_FIELDS:
+        value = traces[args.index][field]
+        if isinstance(value, list):
+            print(f"{field}:")
+            for item in value:
+                print(f"  - {_terminal_safe(item)}")
+        else:
+            print(f"{field}: {_terminal_safe(value)}")
     return 0
 
 
