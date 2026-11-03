@@ -383,6 +383,203 @@ class DecisionTraceValidationCliTests(unittest.TestCase):
 
         self.assertIn("trace store entry 1", str(raised.exception))
 
+    def run_list(self, store: object, store_name: str = "store.json") -> subprocess.CompletedProcess[str]:
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            store_path = Path(temporary_directory) / store_name
+            if store is not None:
+                store_path.write_text(json.dumps(store), encoding="utf-8")
+            return subprocess.run(
+                [
+                    sys.executable,
+                    "-m",
+                    "codbeing",
+                    "list",
+                    "--store",
+                    str(store_path),
+                ],
+                capture_output=True,
+                check=False,
+                cwd=Path(__file__).parents[1],
+                text=True,
+            )
+
+    def test_list_shows_store_entries_with_indices(self) -> None:
+        other = dict(COMPLETE_TRACE, context="Choose a rehearsal slot.")
+        result = self.run_list([COMPLETE_TRACE, other])
+
+        self.assertEqual(result.returncode, 0)
+        self.assertIn("2 DecisionTraces", result.stdout)
+        self.assertIn("[0] Choose a study plan.", result.stdout)
+        self.assertIn("[1] Choose a rehearsal slot.", result.stdout)
+        self.assertIn("chose: Plan A", result.stdout)
+        self.assertIn("confidence: medium", result.stdout)
+
+    def test_list_accepts_a_single_trace_object(self) -> None:
+        result = self.run_list(COMPLETE_TRACE)
+
+        self.assertEqual(result.returncode, 0)
+        self.assertIn("1 DecisionTrace in", result.stdout)
+        self.assertIn("[0] Choose a study plan.", result.stdout)
+
+    def test_list_missing_store_guides_to_capture(self) -> None:
+        result = self.run_list(None)
+
+        self.assertEqual(result.returncode, 0)
+        self.assertIn("No DecisionTraces", result.stdout)
+        self.assertIn("cb capture", result.stdout)
+
+    def test_list_names_the_failing_entry_index(self) -> None:
+        broken = dict(COMPLETE_TRACE)
+        del broken["chosen_action"]
+        result = self.run_list([COMPLETE_TRACE, broken])
+
+        self.assertEqual(result.returncode, 2)
+        self.assertIn("trace store entry 1", result.stdout)
+        self.assertIn("chosen_action", result.stdout)
+
+    def test_list_truncates_long_fields_to_one_line(self) -> None:
+        long_context = "A very long decision context " * 20
+        multiline = dict(
+            COMPLETE_TRACE,
+            context=long_context + "\nwith a second line",
+        )
+        result = self.run_list([multiline])
+
+        self.assertEqual(result.returncode, 0)
+        entry_lines = [
+            line for line in result.stdout.splitlines() if line.startswith("  [0]")
+        ]
+        self.assertEqual(len(entry_lines), 1)
+        self.assertLessEqual(len(entry_lines[0]), 84)
+        self.assertTrue(entry_lines[0].endswith("…"))
+
+    def test_list_strips_terminal_control_characters(self) -> None:
+        hostile = dict(
+            COMPLETE_TRACE,
+            context="\x1b[2J\x1b[Hforged header\x1b[31m red \x07\x1b]0;title\x07",
+            chosen_action="pick\x1b[1m\x1b[4m injected",
+        )
+        result = self.run_list([hostile])
+
+        self.assertEqual(result.returncode, 0)
+        self.assertNotIn("\x1b", result.stdout)
+        self.assertNotIn("\x07", result.stdout)
+        self.assertIn("[2J[Hforged header[31m red ]0;title", result.stdout)
+        self.assertIn("chose: pick[1m[4m injected", result.stdout)
+
+    def test_list_strips_bidi_overrides(self) -> None:
+        hostile = dict(
+            COMPLETE_TRACE,
+            context="pay \u202eTOD\u202c later",
+        )
+        result = self.run_list([hostile])
+
+        self.assertEqual(result.returncode, 0)
+        self.assertNotIn("\u202e", result.stdout)
+        self.assertNotIn("\u202c", result.stdout)
+        self.assertIn("pay TOD later", result.stdout)
+
+    def test_list_preserves_joiners_and_private_use_glyphs(self) -> None:
+        zwj_family = "family \U0001F468\u200D\U0001F469\u200D\U0001F467 plan"
+        zwnj_persian = "\u0645\u06CC\u200C\u062E\u0648\u0627\u0647\u0645"
+        private_use = "glyph \uE000 end"
+        record = dict(
+            COMPLETE_TRACE,
+            context=f"{zwj_family} / {zwnj_persian} / {private_use}",
+        )
+        result = self.run_list([record])
+
+        self.assertEqual(result.returncode, 0)
+        self.assertIn(zwj_family, result.stdout)
+        self.assertIn(zwnj_persian, result.stdout)
+        self.assertIn(private_use, result.stdout)
+
+    def test_list_sanitizes_store_path_display(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            hostile_dir = Path(temporary_directory) / "st\x1b[2Jore\x07"
+            hostile_dir.mkdir()
+            store_path = hostile_dir / "store.json"
+            store_path.write_text(json.dumps([COMPLETE_TRACE]), encoding="utf-8")
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    "-m",
+                    "codbeing",
+                    "list",
+                    "--store",
+                    str(store_path),
+                ],
+                capture_output=True,
+                check=False,
+                cwd=Path(__file__).parents[1],
+                text=True,
+            )
+
+        self.assertEqual(result.returncode, 0)
+        self.assertNotIn("\x1b", result.stdout)
+        self.assertNotIn("\x07", result.stdout)
+        self.assertIn("st[2Jore", result.stdout)
+
+    def test_list_sanitizes_store_path_in_empty_and_missing_modes(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            hostile_dir = Path(temporary_directory) / "st\x1b[2Jore\x07\nFORGED"
+            hostile_dir.mkdir()
+            empty_store = hostile_dir / "empty.json"
+            empty_store.write_text("[]", encoding="utf-8")
+            missing_store = hostile_dir / "missing.json"
+
+            outputs = []
+            for store_path in (empty_store, missing_store):
+                result = subprocess.run(
+                    [
+                        sys.executable,
+                        "-m",
+                        "codbeing",
+                        "list",
+                        "--store",
+                        str(store_path),
+                    ],
+                    capture_output=True,
+                    check=False,
+                    cwd=Path(__file__).parents[1],
+                    text=True,
+                )
+                outputs.append(result.stdout)
+                self.assertEqual(result.returncode, 0)
+                self.assertIn("No DecisionTraces", result.stdout)
+
+        for output in outputs:
+            self.assertNotIn("\x1b", output)
+            self.assertNotIn("\x07", output)
+            self.assertNotIn("\nFORGED", output)
+            self.assertIn("st[2Jore FORGED", output)
+
+    def test_list_does_not_truncate_long_store_paths(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            long_dir = Path(temporary_directory) / ("deep-" + "x" * 120)
+            long_dir.mkdir()
+            store_path = long_dir / "store.json"
+            store_path.write_text(json.dumps([COMPLETE_TRACE]), encoding="utf-8")
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    "-m",
+                    "codbeing",
+                    "list",
+                    "--store",
+                    str(store_path),
+                ],
+                capture_output=True,
+                check=False,
+                cwd=Path(__file__).parents[1],
+                text=True,
+            )
+
+        self.assertEqual(result.returncode, 0)
+        self.assertIn(str(store_path), result.stdout)
+
     def test_cb_home_shows_onboarding_and_model_status_entrypoints(self) -> None:
         result = subprocess.run(
             [sys.executable, "-m", "codbeing"],

@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import json
 import tempfile
+import unicodedata
 import os
 import sys
 from pathlib import Path
@@ -137,6 +138,12 @@ def build_parser() -> argparse.ArgumentParser:
     )
     _add_model_argument(capture_parser)
 
+    list_parser = subparsers.add_parser(
+        "list",
+        help="List the DecisionTraces in a trace store, printing one-line excerpts of your records to this terminal.",
+    )
+    list_parser.add_argument("--store", type=Path, default=DEFAULT_TRACE_STORE)
+
     example_parser = subparsers.add_parser(
         "example", help="Create a private fixture from a known dogfooding example."
     )
@@ -192,6 +199,8 @@ def main(argv: Sequence[str] | None = None) -> int:
 
     if args.command == "capture":
         return _capture(args, config)
+    if args.command == "list":
+        return _list(args)
     if args.command in ("quick", "run") and args.trace_file is None:
         print(f"`cb {args.command}` validates and analyzes a DecisionTrace JSON file.")
         print(f"Usage: cb {args.command} TRACE_FILE [--reports-dir DIR] [--model MODEL]")
@@ -656,6 +665,75 @@ def _render_simulation_context(state: ResearchState) -> None:
 
     if state.latest_report is not None:
         print(f"Simulation report context: compare branches against local report {state.latest_report.name}.")
+
+
+_BIDI_OVERRIDES = frozenset(
+    chr(codepoint)
+    for codepoint in (
+        0x202A, 0x202B, 0x202C, 0x202D, 0x202E,
+        0x2066, 0x2067, 0x2068, 0x2069,
+    )
+)
+
+
+def _terminal_safe(value: Any) -> str:
+    """Collapse whitespace and drop only characters that can steer a terminal.
+
+    C0/C1 controls and DEL (category Cc) carry ANSI escape, bell, and cursor
+    actions, and lone surrogates (Cs) cannot be printed; bidi override
+    characters reorder displayed text. Meaningful Unicode - ZWJ/ZWNJ joiners,
+    private-use glyphs - is preserved.
+    """
+    text = " ".join(str(value).split())
+    return "".join(
+        character
+        for character in text
+        if unicodedata.category(character) not in ("Cc", "Cs")
+        and character not in _BIDI_OVERRIDES
+    )
+
+
+def _one_line(value: Any, limit: int = 72) -> str:
+    """Collapse to one display line safe to print in a terminal."""
+    text = _terminal_safe(value)
+    if len(text) > limit:
+        return text[: limit - 1].rstrip() + "…"
+    return text
+
+
+def _list(args: argparse.Namespace) -> int:
+    """Print one-line excerpts of the user's own locally stored records.
+
+    Unlike the lab entrance screen, this explicit command does show record
+    content (truncated context and chosen action) in the terminal.
+    """
+    try:
+        traces = _load_trace_store(args.store)
+    except UnicodeDecodeError:
+        print("validation error: trace store is invalid UTF-8.")
+        return 2
+    except json.JSONDecodeError as error:
+        print(f"validation error: invalid JSON: {error.msg}")
+        return 2
+    except DecisionTraceValidationError as error:
+        print(f"validation error: {error}")
+        return 2
+    except OSError:
+        print("validation error: could not read trace store. Check the file and permissions.")
+        return 2
+    store_display = _terminal_safe(args.store)
+    if not traces:
+        print(f"No DecisionTraces in {store_display}. Capture one with `cb capture`.")
+        return 0
+    noun = "DecisionTrace" if len(traces) == 1 else "DecisionTraces"
+    print(f"{len(traces)} {noun} in {store_display}:")
+    for index, trace in enumerate(traces):
+        print(f"  [{index}] {_one_line(trace['context'])}")
+        print(
+            f"       chose: {_one_line(trace['chosen_action'])}"
+            f" | confidence: {_one_line(trace['memory_confidence'])}"
+        )
+    return 0
 
 
 def _capture(args: argparse.Namespace, config: CodbeingConfig) -> int:

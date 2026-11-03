@@ -41,8 +41,14 @@ mkdir -p ~/codbeing-private
 cd ~/codbeing-private
 cb example nomusa
 cb capture
+cb list
 cb run private-traces/decision-traces.json
 ```
+
+`cb list` prints one-line excerpts of your locally stored records (context and
+chosen action) to the terminal. Run it only where you are comfortable seeing
+your own notes on screen, and keep the terminal scrollback as private as the
+store itself.
 
 The example is a public fixture, not a real prediction. No API key is needed.
 For development, run `python -m pip install -e ".[dev]"` in the source checkout.
