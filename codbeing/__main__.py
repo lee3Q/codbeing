@@ -871,12 +871,16 @@ def _write_json(path: Path, payload: Any) -> None:
 
 
 def _write_report(report_file: Path, report: str) -> int:
-    report_file.parent.mkdir(parents=True, exist_ok=True)
     try:
-        with report_file.open("x", encoding="utf-8") as handle:
-            handle.write(report)
-    except FileExistsError:
-        print(f"output error: report file already exists: {report_file}")
+        report_file.parent.mkdir(parents=True, exist_ok=True)
+        try:
+            with report_file.open("x", encoding="utf-8") as handle:
+                handle.write(report)
+        except FileExistsError:
+            print(f"output error: report file already exists: {report_file}")
+            return 2
+    except OSError:
+        print("output error: could not write report. Check the destination and permissions; a partial new file may remain.")
         return 2
     print(f"Runtime Analysis report written: {report_file}")
     return 0
