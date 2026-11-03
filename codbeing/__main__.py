@@ -28,6 +28,7 @@ from .lab_state import (
     summarize_research_state,
 )
 from .models import external_assist_ready, model_assist_section
+from . import reflection
 from .report import analyze_decision_traces
 from .schema import REQUIRED_FIELDS, DecisionTraceValidationError, validate_decision_trace
 
@@ -150,6 +151,15 @@ def build_parser() -> argparse.ArgumentParser:
     show_parser.add_argument("index", type=int, help="Zero-based index from cb list; positions may change if the store is edited.")
     show_parser.add_argument("--store", type=Path, default=DEFAULT_TRACE_STORE)
 
+    reflect_parser = subparsers.add_parser(
+        "reflect", help="Record a later observation in a separate local file; never change the original."
+    )
+    reflect_parser.add_argument("index", type=int, help="Zero-based position from cb list; inspect the shown original before saving.")
+    reflect_parser.add_argument("--store", type=Path, default=DEFAULT_TRACE_STORE)
+    reflect_parser.add_argument("--output", type=Path, required=True, help="New private file in an existing directory. Existing files are refused.")
+    reflection_parser = subparsers.add_parser("reflection", help="Read a local retrospective reflection, including private original notes.")
+    reflection_parser.add_argument("reflection_file", type=Path)
+
     example_parser = subparsers.add_parser(
         "example", help="Create a private fixture from a known dogfooding example."
     )
@@ -209,6 +219,10 @@ def main(argv: Sequence[str] | None = None) -> int:
         return _list(args)
     if args.command == "show":
         return _show(args)
+    if args.command == "reflect":
+        return reflection.capture(args, _load_trace_store, _terminal_safe)
+    if args.command == "reflection":
+        return reflection.show(args.reflection_file, _terminal_safe)
     if args.command in ("quick", "run") and args.trace_file is None:
         print(f"`cb {args.command}` validates and analyzes a DecisionTrace JSON file.")
         print(f"Usage: cb {args.command} TRACE_FILE [--reports-dir DIR] [--model MODEL]")
