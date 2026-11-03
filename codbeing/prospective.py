@@ -52,6 +52,8 @@ class ProspectiveJournal:
         events, previous = [], GENESIS
         for index, line in enumerate(lines, 1):
             event = json.loads(line)
+            if not isinstance(event, dict) or not isinstance(event.get("files"), dict):
+                raise ValueError("invalid prospective event structure")
             if (event.get("sequence") != index or event.get("previous_hash") != previous
                 or event.get("event_hash") != _hash({key: value for key, value in event.items() if key != "event_hash"})
                 or event.get("kind") != ("prediction_issued" if index == 1 else "actual_recorded")):
