@@ -743,16 +743,20 @@ def _onboard(config_path: Path, config: CodbeingConfig) -> int:
     print("1. Choose the default model.")
     print("   - codex: local evidence-grounded report only; no external trace upload.")
     print("   - glm: call GLM for an optional review when an API key exists.")
-    provider = _ask("Default model: codex/glm", default=config.model_provider).lower()
-    if provider not in PROVIDERS:
-        print("onboard error: model must be codex or glm")
-        return 2
+    try:
+        provider = _ask("Default model: codex/glm", default=config.model_provider).lower()
+        if provider not in PROVIDERS:
+            print("onboard error: model must be codex or glm")
+            return 2
 
-    updated = CodbeingConfig(
-        model_provider=provider,
-        glm_model=_ask("GLM model", default=config.glm_model),
-        glm_base_url=_ask("GLM base URL", default=config.glm_base_url),
-    )
+        updated = CodbeingConfig(
+            model_provider=provider,
+            glm_model=_ask("GLM model", default=config.glm_model),
+            glm_base_url=_ask("GLM base URL", default=config.glm_base_url),
+        )
+    except EOFError:
+        print("Onboarding needs interactive input. Re-run `cb onboard` in a terminal to finish setup.")
+        return 0
     save_config(updated, config_path)
     print(f"Config written: {config_path}")
     print("")
