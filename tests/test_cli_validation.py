@@ -306,6 +306,83 @@ class DecisionTraceValidationCliTests(unittest.TestCase):
         self.assertIn("trace store entry 1", result.stdout)
         self.assertIn("chosen_action", result.stdout)
 
+    def test_analyze_names_the_failing_entry_index(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            trace_path = Path(temporary_directory) / "store.json"
+            report_path = Path(temporary_directory) / "runtime-analysis.md"
+            broken = dict(COMPLETE_TRACE)
+            del broken["chosen_action"]
+            trace_path.write_text(
+                json.dumps([COMPLETE_TRACE, broken]), encoding="utf-8"
+            )
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    "-m",
+                    "codbeing",
+                    "analyze",
+                    str(trace_path),
+                    str(report_path),
+                ],
+                capture_output=True,
+                check=False,
+                cwd=Path(__file__).parents[1],
+                text=True,
+            )
+
+        self.assertEqual(result.returncode, 2)
+        self.assertIn("trace store entry 1", result.stdout)
+        self.assertIn("chosen_action", result.stdout)
+
+    def test_quick_names_the_failing_entry_index(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            trace_path = Path(temporary_directory) / "store.json"
+            reports_dir = Path(temporary_directory) / "reports"
+            broken = dict(COMPLETE_TRACE)
+            del broken["chosen_action"]
+            trace_path.write_text(
+                json.dumps([broken, COMPLETE_TRACE]), encoding="utf-8"
+            )
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    "-m",
+                    "codbeing",
+                    "quick",
+                    str(trace_path),
+                    "--reports-dir",
+                    str(reports_dir),
+                ],
+                capture_output=True,
+                check=False,
+                cwd=Path(__file__).parents[1],
+                text=True,
+            )
+
+        self.assertEqual(result.returncode, 2)
+        self.assertIn("trace store entry 0", result.stdout)
+        self.assertIn("chosen_action", result.stdout)
+        self.assertFalse(any(reports_dir.iterdir()) if reports_dir.exists() else False)
+
+    def test_capture_store_load_names_the_failing_entry_index(self) -> None:
+        from codbeing.__main__ import _load_trace_store
+        from codbeing.schema import DecisionTraceValidationError
+
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            store_path = Path(temporary_directory) / "store.json"
+            broken = dict(COMPLETE_TRACE)
+            del broken["chosen_action"]
+            store_path.write_text(
+                json.dumps([COMPLETE_TRACE, broken]), encoding="utf-8"
+            )
+
+            with self.assertRaises(DecisionTraceValidationError) as raised:
+                _load_trace_store(store_path)
+
+        self.assertIn("trace store entry 1", str(raised.exception))
+
     def test_cb_home_shows_onboarding_and_model_status_entrypoints(self) -> None:
         result = subprocess.run(
             [sys.executable, "-m", "codbeing"],

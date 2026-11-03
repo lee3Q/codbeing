@@ -214,17 +214,9 @@ def main(argv: Sequence[str] | None = None) -> int:
             print("validation error: could not read trace input. Check the file and permissions.")
             return 2
         if args.command == "validate":
-            if isinstance(trace, list):
-                for index, entry in enumerate(trace):
-                    try:
-                        validate_decision_trace(entry)
-                    except DecisionTraceValidationError as error:
-                        raise DecisionTraceValidationError(
-                            f"trace store entry {index}: {error}"
-                        ) from error
-            else:
-                validate_decision_trace(trace)
+            _validate_trace_input(trace)
         else:
+            _validate_trace_input(trace)
             report = analyze_decision_traces(trace)
             report = _append_model_assist(report, trace, config, args.model)
     except FileNotFoundError:
@@ -853,12 +845,25 @@ def _load_trace_store(path: Path) -> list[dict[str, Any]]:
         validate_decision_trace(payload)
         return [payload]
     if isinstance(payload, list):
-        for trace in payload:
-            validate_decision_trace(trace)
+        _validate_trace_input(payload)
         return payload
     raise DecisionTraceValidationError(
         "trace store must be one DecisionTrace object or an array of DecisionTrace objects."
     )
+
+
+def _validate_trace_input(trace: Any) -> None:
+    """Validate a DecisionTrace or trace store, naming the failing entry index."""
+    if isinstance(trace, list):
+        for index, entry in enumerate(trace):
+            try:
+                validate_decision_trace(entry)
+            except DecisionTraceValidationError as error:
+                raise DecisionTraceValidationError(
+                    f"trace store entry {index}: {error}"
+                ) from error
+    else:
+        validate_decision_trace(trace)
 
 
 def _read_json(path: Path) -> Any:
