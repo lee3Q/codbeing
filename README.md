@@ -46,6 +46,39 @@ cb show 0
 cb run private-traces/decision-traces.json
 ```
 
+### Come back to a decision later
+
+```bash
+cb list
+cb show 0
+cb reflect 0 --output later-observation.json
+cb reflection later-observation.json
+```
+
+`reflect` shows the original fields, asks what you later observed and what
+changed in your judgment, then asks before saving. It writes a **separate local
+file**, never edits the original store, and never calls a model. The output
+includes the complete original record (including extra fields), so keep it
+private. Use `--store PATH` if your records are not in the default store.
+The index is a zero-based position, not a stable ID. Inspect the shown original
+before confirming. Both notes are required; EOF, blank notes or declining the
+confirmation writes nothing.
+
+Choose a new filename in an existing directory. Existing files and symlinks
+are refused, not replaced. New files request owner-only permissions on POSIX;
+platform permissions and the surrounding directory still matter. A disk error
+or interruption during saving may leave an incomplete output file. Inspect it
+before retrying; the original store is not rewritten.
+
+The reflection stores a source snapshot, its canonical JSON SHA-256 digest, and
+this computer's current UTC recording time. `reflection` checks the snapshot
+digest before displaying it. Both the file and its digest/time remain editable:
+this is a retrospective self-report, not independent proof of what you knew
+beforehand, a prediction score, or an entry in the prospective journal. It does
+not rewrite analysis reports or infer a personal trait. File reading displays
+private content in your terminal, using the same control-character cleanup as
+`show`; inspect JSON directly if exact text matters.
+
 `cb list` prints one-line excerpts of your locally stored records (context and
 chosen action) to the terminal. Run it only where you are comfortable seeing
 your own notes on screen, and keep the terminal scrollback as private as the
