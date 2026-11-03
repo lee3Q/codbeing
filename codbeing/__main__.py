@@ -215,6 +215,9 @@ def main(argv: Sequence[str] | None = None) -> int:
     except FileNotFoundError:
         print(f"validation error: file not found: {args.trace_file}")
         return 2
+    except UnicodeDecodeError:
+        print("validation error: trace file is invalid UTF-8.")
+        return 2
     except json.JSONDecodeError as error:
         print(f"validation error: invalid JSON: {error.msg}")
         return 2
@@ -663,6 +666,9 @@ def _capture(args: argparse.Namespace, config: CodbeingConfig) -> int:
     except EOFError:
         print("Capture needs interactive input. Re-run `cb capture` in a terminal to record a DecisionTrace.")
         return 0
+    except UnicodeDecodeError:
+        print("capture error: trace store is invalid UTF-8. Existing bytes were not changed.")
+        return 2
     except (OSError, json.JSONDecodeError, DecisionTraceValidationError) as error:
         print(f"capture error: {error}")
         return 2
