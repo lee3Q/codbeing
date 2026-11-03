@@ -290,6 +290,21 @@ class DecisionTraceValidationCliTests(unittest.TestCase):
         self.assertEqual(result.returncode, 0)
         self.assertIn("valid DecisionTrace:", result.stdout)
 
+    def test_accepts_a_trace_store_array(self) -> None:
+        other = dict(COMPLETE_TRACE, context="Choose a rehearsal slot.")
+        result = self.run_validate([COMPLETE_TRACE, other])
+
+        self.assertEqual(result.returncode, 0)
+        self.assertIn("valid DecisionTrace store (2 traces):", result.stdout)
+
+    def test_rejects_a_store_with_an_invalid_entry(self) -> None:
+        broken = dict(COMPLETE_TRACE)
+        del broken["chosen_action"]
+        result = self.run_validate([COMPLETE_TRACE, broken])
+
+        self.assertEqual(result.returncode, 2)
+        self.assertIn("chosen_action", result.stdout)
+
     def test_cb_home_shows_onboarding_and_model_status_entrypoints(self) -> None:
         result = subprocess.run(
             [sys.executable, "-m", "codbeing"],

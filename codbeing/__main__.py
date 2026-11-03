@@ -103,7 +103,7 @@ def build_parser() -> argparse.ArgumentParser:
     subparsers = parser.add_subparsers(dest="command")
 
     validate_parser = subparsers.add_parser(
-        "validate", help="Validate one DecisionTrace JSON object."
+        "validate", help="Validate a DecisionTrace JSON object or trace store."
     )
     validate_parser.add_argument("trace_file", type=Path)
 
@@ -214,7 +214,11 @@ def main(argv: Sequence[str] | None = None) -> int:
             print("validation error: could not read trace input. Check the file and permissions.")
             return 2
         if args.command == "validate":
-            validate_decision_trace(trace)
+            if isinstance(trace, list):
+                for entry in trace:
+                    validate_decision_trace(entry)
+            else:
+                validate_decision_trace(trace)
         else:
             report = analyze_decision_traces(trace)
             report = _append_model_assist(report, trace, config, args.model)
@@ -232,7 +236,10 @@ def main(argv: Sequence[str] | None = None) -> int:
         return 2
 
     if args.command == "validate":
-        print(f"valid DecisionTrace: {args.trace_file}")
+        if isinstance(trace, list):
+            print(f"valid DecisionTrace store ({len(trace)} traces): {args.trace_file}")
+        else:
+            print(f"valid DecisionTrace: {args.trace_file}")
         return 0
 
     if args.command == "analyze":
