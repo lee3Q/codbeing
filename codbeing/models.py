@@ -110,6 +110,9 @@ def _glm_assist_section(
         TimeoutError,
         json.JSONDecodeError,
         KeyError,
+        IndexError,
+        TypeError,
+        UnicodeError,
     ) as error:
         return [
             "## Model Assist",
