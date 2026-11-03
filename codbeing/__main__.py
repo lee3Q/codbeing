@@ -206,7 +206,13 @@ def main(argv: Sequence[str] | None = None) -> int:
         return _skills()
 
     try:
-        trace = _read_json(args.trace_file)
+        try:
+            trace = _read_json(args.trace_file)
+        except FileNotFoundError:
+            raise
+        except OSError:
+            print("validation error: could not read trace input. Check the file and permissions.")
+            return 2
         if args.command == "validate":
             validate_decision_trace(trace)
         else:
