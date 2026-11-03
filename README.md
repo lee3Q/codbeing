@@ -42,13 +42,20 @@ cd ~/codbeing-private
 cb example nomusa
 cb capture
 cb list
+cb show 0
 cb run private-traces/decision-traces.json
 ```
 
 `cb list` prints one-line excerpts of your locally stored records (context and
 chosen action) to the terminal. Run it only where you are comfortable seeing
 your own notes on screen, and keep the terminal scrollback as private as the
-store itself.
+store itself. `cb show 0` displays all original fields of the record at index
+`0` without truncating their text. It does not change the store or call a model.
+Both commands accept `--store PATH`; use the same path for listing and showing.
+Indices are zero-based positions, not permanent IDs, and can change if you edit
+or reorder the store. Terminal control characters are removed and whitespace
+is collapsed for safe display. Only the standard DecisionTrace fields are
+shown; the underlying JSON, including extension fields, is unchanged.
 
 The example is a public fixture, not a real prediction. No API key is needed.
 For development, run `python -m pip install -e ".[dev]"` in the source checkout.
