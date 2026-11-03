@@ -215,8 +215,13 @@ def main(argv: Sequence[str] | None = None) -> int:
             return 2
         if args.command == "validate":
             if isinstance(trace, list):
-                for entry in trace:
-                    validate_decision_trace(entry)
+                for index, entry in enumerate(trace):
+                    try:
+                        validate_decision_trace(entry)
+                    except DecisionTraceValidationError as error:
+                        raise DecisionTraceValidationError(
+                            f"trace store entry {index}: {error}"
+                        ) from error
             else:
                 validate_decision_trace(trace)
         else:

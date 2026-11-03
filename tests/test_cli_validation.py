@@ -303,6 +303,7 @@ class DecisionTraceValidationCliTests(unittest.TestCase):
         result = self.run_validate([COMPLETE_TRACE, broken])
 
         self.assertEqual(result.returncode, 2)
+        self.assertIn("trace store entry 1", result.stdout)
         self.assertIn("chosen_action", result.stdout)
 
     def test_cb_home_shows_onboarding_and_model_status_entrypoints(self) -> None:
