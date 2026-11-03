@@ -865,11 +865,13 @@ def _write_json(path: Path, payload: Any) -> None:
 
 
 def _write_report(report_file: Path, report: str) -> int:
-    if report_file.exists():
+    report_file.parent.mkdir(parents=True, exist_ok=True)
+    try:
+        with report_file.open("x", encoding="utf-8") as handle:
+            handle.write(report)
+    except FileExistsError:
         print(f"output error: report file already exists: {report_file}")
         return 2
-    report_file.parent.mkdir(parents=True, exist_ok=True)
-    report_file.write_text(report, encoding="utf-8")
     print(f"Runtime Analysis report written: {report_file}")
     return 0
 
@@ -879,7 +881,7 @@ def _next_report_path(reports_dir: Path, stem: str) -> Path:
     safe_stem = _safe_filename_stem(stem)
     suffix = 1
     candidate = reports_dir / f"{safe_stem}-runtime-analysis-{suffix}.md"
-    while candidate.exists():
+    while candidate.exists() or candidate.is_symlink():
         suffix += 1
         candidate = reports_dir / f"{safe_stem}-runtime-analysis-{suffix}.md"
     return candidate
