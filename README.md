@@ -190,9 +190,12 @@ for each subsequent build and prediction.
 
 ## Verification
 
+From a source checkout, install the test tools first (the tests need `pytest`):
+
 ```bash
-python3 -m unittest discover -s tests -v
-python3 -m pytest -q
+python -m pip install -e ".[dev]"
+python -m pytest -q
+python -m unittest discover -s tests -v
 ```
 
 ### DecisionTrace validation
