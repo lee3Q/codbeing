@@ -546,8 +546,20 @@ def _render_lab_surface(action: str, config: CodbeingConfig, mode: str) -> str:
         )
         return mode
     elif action == "capture":
-        print("내 기록을 이 기기에만 저장합니다. 먼저 짧은 메모를 남길 수 있습니다.")
-        return _render_lab_surface("submit", config, mode)
+        print("내 결정의 상황·선택지·판단 근거를 차례로 묻고 이 기기에 저장합니다.")
+        print("완료 후 로컬 분석을 만듭니다. 외부 모델은 사용하지 않습니다.")
+        print("취소하려면 Ctrl+C를 누르세요. 저장 중 취소했다면 기록을 먼저 확인하세요.")
+        _capture(
+            argparse.Namespace(
+                store=DEFAULT_TRACE_STORE,
+                reports_dir=DEFAULT_REPORTS_DIR,
+                name=None,
+                no_analyze=False,
+                model="codex",
+            ),
+            config,
+        )
+        return mode
     elif action == "accompany":
         print("Surface: Researcher accompaniment")
         print("Mode: Researcher accompaniment")
