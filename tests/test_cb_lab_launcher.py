@@ -20,6 +20,7 @@ from codbeing.__main__ import (
     _home,
     _lab_actions,
     _render_lab_entrance,
+    _render_lab_surface,
     _run_lab_action,
     main,
 )
@@ -358,7 +359,7 @@ class LabLauncherTests(unittest.TestCase):
         with patch("codbeing.__main__.model_assist_section") as model_assist:
             self._run_in_empty_workspace()
             actions = _lab_actions(1, Path("private-reports/latest.md"))
-            with patch("builtins.input", side_effect=["2", ""]):
+            with patch("builtins.input", side_effect=["2", EOFError]):
                 _run_lab_action(actions, CodbeingConfig(model_provider="glm"))
             for selection in ("3", "4"):
                 with patch("builtins.input", return_value=selection):
@@ -515,9 +516,10 @@ class LabLauncherTests(unittest.TestCase):
                     self.assertEqual(main([]), 0)
 
                 with (
-                    patch("builtins.input", side_effect=["2", "A local observation.", "e", "q"]),
+                    patch("builtins.input", side_effect=["A local observation.", "e", "q"]),
                     redirect_stdout(submitted_output),
                 ):
+                    _render_lab_surface("submit", CodbeingConfig(), "Solo inspect")
                     self.assertEqual(main([]), 0)
             finally:
                 os.chdir(original_directory)
@@ -550,10 +552,11 @@ class LabLauncherTests(unittest.TestCase):
                 with (
                     patch(
                         "builtins.input",
-                        side_effect=["2", "A local observation.", "3", "q"],
+                        side_effect=["A local observation.", "3", "q"],
                     ),
                     redirect_stdout(submitted_output),
                 ):
+                    _render_lab_surface("submit", CodbeingConfig(), "Solo inspect")
                     self.assertEqual(main([]), 0)
             finally:
                 os.chdir(original_directory)
@@ -597,11 +600,12 @@ class LabLauncherTests(unittest.TestCase):
                 with (
                     patch(
                         "builtins.input",
-                        side_effect=["2", "A local observation.", "5", "q"],
+                        side_effect=["A local observation.", "5", "q"],
                     ),
                     patch("codbeing.__main__.external_assist_ready") as external_assist_ready,
                     redirect_stdout(submitted_output),
                 ):
+                    _render_lab_surface("submit", CodbeingConfig(), "Solo inspect")
                     self.assertEqual(main([]), 0)
             finally:
                 os.chdir(original_directory)
@@ -636,11 +640,12 @@ class LabLauncherTests(unittest.TestCase):
                 with (
                     patch(
                         "builtins.input",
-                        side_effect=["2", "I paused before replying.", "5", "q"],
+                        side_effect=["I paused before replying.", "5", "q"],
                     ),
                     patch("codbeing.__main__.external_assist_ready") as external_assist_ready,
                     redirect_stdout(submitted_output),
                 ):
+                    _render_lab_surface("submit", CodbeingConfig(), "Solo inspect")
                     self.assertEqual(main([]), 0)
             finally:
                 os.chdir(original_directory)
@@ -675,10 +680,11 @@ class LabLauncherTests(unittest.TestCase):
             try:
                 os.chdir(workspace)
                 with (
-                    patch("builtins.input", side_effect=["2", "I paused before replying.", "e", "q"]),
+                    patch("builtins.input", side_effect=["I paused before replying.", "e", "q"]),
                     patch("codbeing.__main__.external_assist_ready") as external_assist_ready,
                     redirect_stdout(output),
                 ):
+                    _render_lab_surface("submit", CodbeingConfig(), "Solo inspect")
                     self.assertEqual(main([]), 0)
             finally:
                 os.chdir(original_directory)
