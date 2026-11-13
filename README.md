@@ -96,6 +96,11 @@ For development, run `python -m pip install -e ".[dev]"` in the source checkout.
 clean environment, then tests the CLI from outside the checkout. It downloads
 Python build tools but does not call model providers.
 
+The no-argument lab reports unreadable or invalid-UTF-8 trace and note stores
+without closing the entrance. It also returns to the entrance if a selected
+report cannot be read. These warnings do not repair or rewrite existing files.
+Keep a backup and check the affected file before trying to save more data.
+
 ## Privacy Boundary
 
 The repository intentionally excludes local private data:
