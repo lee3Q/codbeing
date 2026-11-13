@@ -449,6 +449,8 @@ def _render_lab_entrance(
         print(f"  {index}. {label}")
     print("")
     print(f"현재 로컬 상태: 기록 {summary.evidence} / 분석 {summary.analysis}")
+    for warning in summary.warnings:
+        print(f"Local data warning: {warning} Existing files were not changed.")
     print(
         "고급 명령어도 그대로 사용할 수 있습니다: capture, run, quick, model, "
         "example nomusa, skills, cb onboard, cb model status."
@@ -601,7 +603,12 @@ def _render_lab_surface(action: str, config: CodbeingConfig, mode: str) -> str:
                 print("# Local report fixture")
                 print("DecisionTrace evidence is ready for private analysis review.")
             else:
-                print(latest_report.read_text(encoding="utf-8"))
+                try:
+                    report_text = latest_report.read_text(encoding="utf-8")
+                except (OSError, UnicodeError):
+                    print("Local report error: could not read the report. Check its encoding and permissions; existing files were not changed.")
+                else:
+                    print(report_text)
             if state.submitted_material:
                 _render_submitted_material_context(state.submitted_material)
                 print(
