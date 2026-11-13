@@ -129,7 +129,7 @@ def _load_readable_traces(path: Path) -> tuple[list[dict[str, Any]], bool]:
     try:
         with path.open(encoding="utf-8") as trace_handle:
             payload = json.load(trace_handle)
-    except (OSError, json.JSONDecodeError):
+    except (OSError, UnicodeError, json.JSONDecodeError):
         return [], True
 
     candidates = [payload] if isinstance(payload, Mapping) else payload
@@ -179,7 +179,7 @@ def _load_submitted_material(path: Path | None) -> tuple[list[str], bool]:
     try:
         with path.open(encoding="utf-8") as material_handle:
             payload = json.load(material_handle)
-    except (OSError, json.JSONDecodeError):
+    except (OSError, UnicodeError, json.JSONDecodeError):
         return [], True
 
     if not isinstance(payload, list) or not all(isinstance(item, str) and item.strip() for item in payload):
