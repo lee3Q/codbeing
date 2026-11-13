@@ -101,6 +101,14 @@ without closing the entrance. It also returns to the entrance if a selected
 report cannot be read. These warnings do not repair or rewrite existing files.
 Keep a backup and check the affected file before trying to save more data.
 
+With `cb` and no arguments, menu option 2 asks the same structured decision
+questions as `cb capture`, saves to `private-traces/decision-traces.json`, and
+writes a local analysis report. This menu path always uses local report logic,
+even if your saved provider is GLM. It does not change that saved setting or
+call Codex or another external model. Ctrl+C cancels input before saving; if
+interrupted during saving, check the store before retrying. Existing submitted
+notes remain separate and are not converted into decisions automatically.
+
 ## Privacy Boundary
 
 The repository intentionally excludes local private data:
