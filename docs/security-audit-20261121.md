@@ -11,6 +11,10 @@
 
 The public cycle ledger was regenerated through `EvidenceLedger.run()`. Its receipt now contains the observed attempt, inputs, outputs, exit status, stdout, stderr, and outcome required by the verifier. The committed expected head was updated to the regenerated head. Verifier safety was not weakened.
 
+## Review remediation
+
+The follow-up repair moved the public ledger outputs to the tracked synthetic-cycle example files and regenerated the observed graph-command receipt through EvidenceLedger.run(). The exact verification command now reports current_status.public_cycle: PASS with expected head 96a83068d6ee42fe2f65b323830de46e4fde29008217bfeb5501f92707ed5d3b. A regression test asserts the semantic status and head.
+
 ## Tests and evidence
 
 - Focused config permission and overwrite tests passed.
