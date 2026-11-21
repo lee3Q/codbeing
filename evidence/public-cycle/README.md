@@ -2,11 +2,11 @@
 
 `ledger.jsonl` is a recorded append-only sequence for the fictional case.
 It links the Seed, acceptance criterion, executed DAG command, captured
-process receipt, five produced artifacts, and handoff. Replay it without
+process receipt, four tracked synthetic-cycle artifacts, and handoff. Replay it without
 reading model conversation:
 
 ```sh
-python3 -m codbeing.evidence_ledger evidence/public-cycle/ledger.jsonl verify --expected-head 16693390121e7a5122289f48b5d4de3e7634707f61c6851eb77572eb5ca40c64
+python3 -m codbeing.evidence_ledger evidence/public-cycle/ledger.jsonl verify --expected-head 96a83068d6ee42fe2f65b323830de46e4fde29008217bfeb5501f92707ed5d3b
 python3 -m codbeing.impact_validation examples/synthetic-cycle/validation-graph.json run --receipt-dir .codbeing-validation/public-cycle
 ```
 

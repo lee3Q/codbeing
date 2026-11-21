@@ -20,7 +20,7 @@ Implement confirmed F-002 config permissions and repair the public evidence ledg
 
 `bash scripts/reproduce_synthetic_cycle.sh`
 
-`python3 -m codbeing.evidence_ledger evidence/public-cycle/ledger.jsonl verify --expected-head 16693390121e7a5122289f48b5d4de3e7634707f61c6851eb77572eb5ca40c64`
+`python3 -m codbeing.evidence_ledger evidence/public-cycle/ledger.jsonl verify --expected-head 96a83068d6ee42fe2f65b323830de46e4fde29008217bfeb5501f92707ed5d3b`
 
 ## Unknowns
 
