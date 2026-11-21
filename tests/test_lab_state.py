@@ -160,3 +160,14 @@ def test_submitted_material_is_persisted_in_local_research_state() -> None:
     assert state.submitted_material == ("I delayed the decision after the conversation.",)
     assert state.submitted_material_count == 1
     assert state.submitted_material_store_has_issue is False
+
+
+def test_submitted_material_is_owner_only(tmp_path):
+    import os
+    old_umask = os.umask(0o022)
+    try:
+        path = tmp_path / "private" / "submitted.json"
+        assert append_submitted_material(path, "private note") == 1
+    finally:
+        os.umask(old_umask)
+    assert path.stat().st_mode & 0o777 == 0o600

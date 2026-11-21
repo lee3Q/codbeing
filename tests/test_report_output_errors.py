@@ -1,6 +1,7 @@
 """Report I/O failures return an error instead of an unhandled traceback."""
 import errno
 import json
+import builtins
 from pathlib import Path
 from unittest.mock import patch
 
@@ -31,9 +32,9 @@ def test_report_io_error_is_not_success(tmp_path, capsys, operation):
             def __enter__(self): return self
             def __exit__(self, *_): return False
             def write(self, _): raise failure
-        target = patch.object(Path, 'open', return_value=FailedWriter())
+        target = patch.object(builtins, 'open', return_value=FailedWriter())
     else:
-        target = patch.object(Path, operation, side_effect=failure)
+        target = patch.object(Path, operation, side_effect=failure) if operation == 'mkdir' else patch.object(builtins, 'open', side_effect=failure)
     with target:
         assert _write_report(destination, 'report') == 2
     output = capsys.readouterr().out

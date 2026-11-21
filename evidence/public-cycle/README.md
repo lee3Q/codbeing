@@ -6,7 +6,7 @@ process receipt, five produced artifacts, and handoff. Replay it without
 reading model conversation:
 
 ```sh
-python3 -m codbeing.evidence_ledger evidence/public-cycle/ledger.jsonl verify --expected-head 33e0e9424163959e2f0f789b4be7290931c5f2fa1224aa4f6c096639ee2bb686
+python3 -m codbeing.evidence_ledger evidence/public-cycle/ledger.jsonl verify --expected-head 16693390121e7a5122289f48b5d4de3e7634707f61c6851eb77572eb5ca40c64
 python3 -m codbeing.impact_validation examples/synthetic-cycle/validation-graph.json run --receipt-dir .codbeing-validation/public-cycle
 ```
 

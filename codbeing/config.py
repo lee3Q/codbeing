@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import os
+import tempfile
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -40,19 +41,33 @@ def load_config(path: Path = DEFAULT_CONFIG_PATH) -> CodbeingConfig:
 
 def save_config(config: CodbeingConfig, path: Path = DEFAULT_CONFIG_PATH) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(
-        json.dumps(
-            {
-                "model_provider": config.model_provider,
-                "glm_model": config.glm_model,
-                "glm_base_url": config.glm_base_url,
-            },
-            ensure_ascii=False,
-            indent=2,
-        )
-        + "\n",
-        encoding="utf-8",
-    )
+    payload = json.dumps(
+        {
+            "model_provider": config.model_provider,
+            "glm_model": config.glm_model,
+            "glm_base_url": config.glm_base_url,
+        },
+        ensure_ascii=False,
+        indent=2,
+    ) + "\n"
+    temporary = None
+    fd = None
+    try:
+        fd, temporary_name = tempfile.mkstemp(prefix=f".{path.name}.", dir=path.parent)
+        temporary = Path(temporary_name)
+        os.fchmod(fd, 0o600)
+        with os.fdopen(fd, "w", encoding="utf-8") as stream:
+            fd = None
+            stream.write(payload)
+            stream.flush()
+            os.fsync(stream.fileno())
+        os.replace(temporary, path)
+        temporary = None
+    finally:
+        if fd is not None:
+            os.close(fd)
+        if temporary is not None:
+            temporary.unlink(missing_ok=True)
 
 
 def resolve_provider(config: CodbeingConfig, override: str | None = None) -> str:

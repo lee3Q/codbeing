@@ -123,3 +123,17 @@ def test_cli_preserves_issued_model_and_prediction_files(tmp_path):
     assert model_path.read_bytes() == original_model
     assert run("predict", model_path, scenario_path, card_path, "--at", "2026-08-02T12:00:00+00:00").returncode == 2
     assert card_path.read_bytes() == original_card
+
+
+def test_immutable_output_does_not_follow_dangling_symlink(tmp_path):
+    target = tmp_path / "outside.json"
+    output = tmp_path / "model.json"
+    output.symlink_to(target)
+    result = subprocess.run(
+        [sys.executable, "-m", "codbeing.research_cycle", "model",
+         str(CASE / "decisions.json"), str(output)],
+        capture_output=True, text=True,
+    )
+    assert result.returncode == 2
+    assert not target.exists()
+    assert output.is_symlink()

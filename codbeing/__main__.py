@@ -1042,11 +1042,16 @@ def _write_json(path: Path, payload: Any) -> None:
             temporary.unlink(missing_ok=True)
 
 
+def _owner_only_opener(path: str, flags: int) -> int:
+    """Create new private output files with owner-only permissions."""
+    return os.open(path, flags, 0o600)
+
+
 def _write_report(report_file: Path, report: str) -> int:
     try:
         report_file.parent.mkdir(parents=True, exist_ok=True)
         try:
-            with report_file.open("x", encoding="utf-8") as handle:
+            with open(report_file, "x", encoding="utf-8", opener=_owner_only_opener) as handle:
                 handle.write(report)
         except FileExistsError:
             print(f"output error: report file already exists: {report_file}")
