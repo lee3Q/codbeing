@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import json
+import os
+import tempfile
 from collections.abc import Mapping
 from dataclasses import dataclass
 from pathlib import Path
@@ -77,10 +79,20 @@ def append_submitted_material(path: Path, material: str) -> int:
 
     submitted_material.append(normalized_material)
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(
-        json.dumps(submitted_material, ensure_ascii=False, indent=2) + "\n",
-        encoding="utf-8",
-    )
+    temporary = None
+    try:
+        descriptor, temporary_name = tempfile.mkstemp(
+            dir=path.parent, prefix=f".{path.name}.", suffix=".tmp"
+        )
+        temporary = Path(temporary_name)
+        with os.fdopen(descriptor, "w", encoding="utf-8") as material_handle:
+            material_handle.write(json.dumps(submitted_material, ensure_ascii=False, indent=2) + "\n")
+            material_handle.flush()
+            os.fsync(material_handle.fileno())
+        temporary.replace(path)
+    finally:
+        if temporary is not None:
+            temporary.unlink(missing_ok=True)
     return len(submitted_material)
 
 

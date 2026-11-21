@@ -1,4 +1,5 @@
 """Existing report paths remain untouched, including races and dangling links."""
+import builtins
 from pathlib import Path
 from unittest.mock import patch
 
@@ -7,13 +8,13 @@ from codbeing.__main__ import _next_report_path, _write_report
 
 def test_report_created_after_precheck_is_not_overwritten(tmp_path, capsys):
     destination = tmp_path / "report.md"
-    original_open = Path.open
+    original_open = builtins.open
     def competing_open(path, mode="r", *args, **kwargs):
-        if path == destination and mode in {"w", "x"}:
+        if Path(path) == destination and mode == "x":
             with original_open(destination, "w", encoding="utf-8") as handle:
                 handle.write("other writer's report")
         return original_open(path, mode, *args, **kwargs)
-    with patch.object(Path, "open", competing_open):
+    with patch("builtins.open", competing_open):
         assert _write_report(destination, "new report") == 2
     assert destination.read_text(encoding="utf-8") == "other writer's report"
     assert "report file already exists" in capsys.readouterr().out
@@ -70,3 +71,13 @@ def test_two_report_writers_have_one_winner(tmp_path):
     assert destination.read_text(encoding="utf-8") in {"writer A", "writer B"}
     assert sum("report written:" in result.stdout for result in results) == 1
     assert all(not result.stderr for result in results)
+
+
+def test_new_report_is_owner_only(tmp_path):
+    destination = tmp_path / "private-report.md"
+    old_umask = __import__("os").umask(0o022)
+    try:
+        assert _write_report(destination, "private report") == 0
+    finally:
+        __import__("os").umask(old_umask)
+    assert destination.stat().st_mode & 0o777 == 0o600
